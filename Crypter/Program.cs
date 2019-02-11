@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace HenkCrypter
+namespace Crypter
 {
     static class Program
     {
@@ -16,7 +16,7 @@ namespace HenkCrypter
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Builder());
+            Application.Run(new Crypter());
         }
     }
 }

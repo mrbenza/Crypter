@@ -6,7 +6,7 @@ This way you can create safe licenses ~and hide applications from antivirus(don'
 
 ```diff
 - I am not responsible for any damage.
-- ~~~It is not my intention to let you hide applications from antivirus.~~~
+- **It is not my intention to let you hide applications from antivirus.**
 - This is for learning purposes only.
 ```
 

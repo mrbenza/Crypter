@@ -1,4 +1,4 @@
-﻿/* HenkCrypter
+﻿/* Crypter
  * Copyright (C) 2019  henkje (henkje@pm.me)
  * 
  * MIT license
@@ -28,6 +28,8 @@ namespace Crypter
         private void build_Click(object sender, EventArgs e)
         {
             if (!File.Exists(path.Text)) { MessageBox.Show("No file selected"); return; }
+            else if(!File.Exists(Path.Combine(Application.StartupPath, "Stub1.exe"))|| !File.Exists(Path.Combine(Application.StartupPath, "Stub2.exe")))
+            throw new NullReferenceException("Could not crypt: Stub files are missing");
 
             string EncryptionKey = Key.Text;//Get the right key, if textbox is empty. Get default key.
             if (EncryptionKey.Length <= 0) EncryptionKey = KEY;
@@ -36,8 +38,8 @@ namespace Crypter
             //Stub1 = stub with password
             //Stub2 = stub without password
             byte[] StubBytes;
-            if (Key.Text.Length <= 0) StubBytes =  File.ReadAllBytes(Path.Combine(Application.StartupPath, "Stub2.data"));
-            else StubBytes = File.ReadAllBytes(Path.Combine(Application.StartupPath, "Stub1.data"));
+            if (Key.Text.Length <= 0) StubBytes =  File.ReadAllBytes(Path.Combine(Application.StartupPath, "Stub2.exe"));
+            else StubBytes = File.ReadAllBytes(Path.Combine(Application.StartupPath, "Stub1.exe"));
 
             //Get the bytes of the Program.
             byte[] ProgramBytes = File.ReadAllBytes(path.Text);

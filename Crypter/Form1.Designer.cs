@@ -28,33 +28,12 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.Key = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
             this.build = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.search = new System.Windows.Forms.Button();
             this.path = new System.Windows.Forms.TextBox();
+            this.winexe = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
-            // 
-            // Key
-            // 
-            this.Key.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(45)))));
-            this.Key.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.Key.ForeColor = System.Drawing.Color.White;
-            this.Key.Location = new System.Drawing.Point(80, 42);
-            this.Key.Name = "Key";
-            this.Key.Size = new System.Drawing.Size(292, 13);
-            this.Key.TabIndex = 39;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.ForeColor = System.Drawing.Color.White;
-            this.label2.Location = new System.Drawing.Point(9, 42);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(28, 13);
-            this.label2.TabIndex = 38;
-            this.label2.Text = "Key:";
             // 
             // build
             // 
@@ -65,9 +44,9 @@
             this.build.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(20)))), ((int)(((byte)(20)))));
             this.build.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.build.ForeColor = System.Drawing.Color.White;
-            this.build.Location = new System.Drawing.Point(12, 69);
+            this.build.Location = new System.Drawing.Point(12, 55);
             this.build.Name = "build";
-            this.build.Size = new System.Drawing.Size(360, 30);
+            this.build.Size = new System.Drawing.Size(360, 44);
             this.build.TabIndex = 37;
             this.build.Text = "build";
             this.build.UseVisualStyleBackColor = false;
@@ -111,14 +90,24 @@
             this.path.Size = new System.Drawing.Size(266, 13);
             this.path.TabIndex = 34;
             // 
+            // winexe
+            // 
+            this.winexe.AutoSize = true;
+            this.winexe.ForeColor = System.Drawing.Color.White;
+            this.winexe.Location = new System.Drawing.Point(313, 34);
+            this.winexe.Name = "winexe";
+            this.winexe.Size = new System.Drawing.Size(59, 17);
+            this.winexe.TabIndex = 38;
+            this.winexe.Text = "winexe";
+            this.winexe.UseVisualStyleBackColor = true;
+            // 
             // Crypter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.ClientSize = new System.Drawing.Size(384, 111);
-            this.Controls.Add(this.Key);
-            this.Controls.Add(this.label2);
+            this.Controls.Add(this.winexe);
             this.Controls.Add(this.build);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.search);
@@ -136,13 +125,11 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.TextBox Key;
-        private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button build;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button search;
         private System.Windows.Forms.TextBox path;
+        private System.Windows.Forms.CheckBox winexe;
     }
 }
 

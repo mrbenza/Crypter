@@ -12,53 +12,108 @@
 
 using System;
 using System.IO;
-using AesEncryption;
+using System.Linq;
+using System.Text;
+using EasyEncrypt;
+using Microsoft.CSharp;
 using System.Windows.Forms;
 using System.Security.Cryptography;
+using System.CodeDom.Compiler;
 
 namespace Crypter
 {
     public partial class Crypter : Form
     {
-        const string KEY = "EncryptionKey";
-        const string SALT = "SALT!@#1(D1423SFNI1234O)#234@)$321#90";
+        const string CODE =
+@"
+using System;
+using System.IO;
+using System.Reflection;
+using System.Security.Cryptography;
+
+namespace NaMeSpAcE
+{
+    class Program
+    {
+            static void Main()
+            {
+                byte[] ProgramBytes = GetBytes();//Get the bytes from the program
+                ExecuteBytes(ProgramBytes);//Execute the bytes
+            }
+
+            static void ExecuteBytes(byte[] Data)
+            {
+                //Create assembly of the Data.
+                Assembly Assembly = Assembly.Load(Data);
+
+                //Get the entry point of the program.
+                MethodInfo method = Assembly.EntryPoint;
+
+                //Run the application from starting point.
+                method.Invoke(Assembly.CreateInstance(method.Name), null);
+            }
+
+            static byte[] GetBytes()
+            {
+                Aes Provider = Aes.Create();//Create algorithm
+                Provider.Key = ___KEY___;//Set encryption key
+
+                using (MemoryStream ms = new MemoryStream(___PROGRAM___))//Create memory stream with program bytes
+                {
+                    byte[] IV = new byte[Provider.IV.Length];
+                    ms.Read(IV, 0, IV.Length);//Get IV from ms(first 16 bytes)
+                    Provider.IV = IV;//Add IV to Algorithm
+
+                    using (CryptoStream cs = new CryptoStream(ms, Provider.CreateDecryptor(Provider.Key, Provider.IV), CryptoStreamMode.Read))
+                    {
+                        byte[] Decrypted = new byte[ms.Length];
+                        int byteCount = cs.Read(Decrypted, 0, (int)ms.Length);
+                        return new MemoryStream(Decrypted, 0, byteCount).ToArray();
+                    }
+                }
+            }
+        }
+    }
+
+";
 
         public Crypter()=> InitializeComponent();
 
         private void build_Click(object sender, EventArgs e)
         {
             if (!File.Exists(path.Text)) { MessageBox.Show("No file selected"); return; }
-            else if(!File.Exists(Path.Combine(Application.StartupPath, "Stub1.exe"))|| !File.Exists(Path.Combine(Application.StartupPath, "Stub2.exe")))
-            throw new NullReferenceException("Could not crypt: Stub files are missing");
 
-            string EncryptionKey = Key.Text;//Get the right key, if textbox is empty. Get default key.
-            if (EncryptionKey.Length <= 0) EncryptionKey = KEY;
+            //Set up the compiler.
+            CSharpCodeProvider csc = new CSharpCodeProvider();
+            CompilerParameters parameters = new CompilerParameters(new[] { "mscorlib.dll", "System.Core.dll" }, "build.exe") { GenerateExecutable = true };
+            if (winexe.Checked) parameters.CompilerOptions = "/target:winexe";
 
-            //Get the bytes of the rigth stub,
-            //Stub1 = stub with password
-            //Stub2 = stub without password
-            byte[] StubBytes;
-            if (Key.Text.Length <= 0) StubBytes =  File.ReadAllBytes(Path.Combine(Application.StartupPath, "Stub2.exe"));
-            else StubBytes = File.ReadAllBytes(Path.Combine(Application.StartupPath, "Stub1.exe"));
+            //Set up the code.
+            string Code = CODE;
 
-            //Get the bytes of the Program.
+            byte[] EncryptionKey = Aes.Create().Key;
+            Code = Code.Replace("___KEY___", ByteArrayToString(EncryptionKey));
+
             byte[] ProgramBytes = File.ReadAllBytes(path.Text);
+            byte[] EncryptedProgramBytes = new Encryption(Aes.Create(), EncryptionKey).Encrypt(ProgramBytes);
 
-            //Encrypt the bytes of the Program.
-            ProgramBytes = new Encryption(Aes.Create(),EncryptionKey,SALT).Encrypt(ProgramBytes);
+            Code = Code.Replace("___PROGRAM___", ByteArrayToString(EncryptedProgramBytes));
 
-            //Get the length of the encrypted bytes and convert the length to a byte[].
-            byte[] LengthBytes = BitConverter.GetBytes(ProgramBytes.Length);
+            CompilerResults results = csc.CompileAssemblyFromSource(parameters, Code);
+            results.Errors.Cast<CompilerError>().ToList().ForEach(error => MessageBox.Show(error.ErrorText));
+        }
 
-            //Merge all the bytes,
-            //result: [StubBytes,ProgramBytes,Length of ProgramBytes]
-            byte[] ToWrite = new byte[StubBytes.Length + ProgramBytes.Length + LengthBytes.Length];
-            Buffer.BlockCopy(StubBytes, 0, ToWrite, 0, StubBytes.Length);
-            Buffer.BlockCopy(ProgramBytes, 0, ToWrite, StubBytes.Length, ProgramBytes.Length);
-            Buffer.BlockCopy(LengthBytes, 0, ToWrite, StubBytes.Length + ProgramBytes.Length, LengthBytes.Length);
-
-            //Write all the bytes.
-            File.WriteAllBytes(Path.Combine(Application.StartupPath, "Build.exe"),ToWrite);
+        private string ByteArrayToString(byte[] Array)
+        {
+            StringBuilder Builder = new StringBuilder();
+            Builder.Append("new byte[] {");
+            foreach (byte b in Array)
+            {
+                Builder.Append(b);
+                Builder.Append(',');
+            }
+            Builder.Append("}");
+            return Builder.ToString();           
         }
 
         private void search_Click(object sender, EventArgs e)

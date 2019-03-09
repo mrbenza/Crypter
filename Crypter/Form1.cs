@@ -26,7 +26,6 @@ namespace Crypter
     {
         const string CODE =
 @"
-using System;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -74,33 +73,37 @@ namespace NaMeSpAcE
             }
         }
     }
-
 ";
 
         public Crypter()=> InitializeComponent();
 
         private void build_Click(object sender, EventArgs e)
         {
-            if (!File.Exists(path.Text)) { MessageBox.Show("No file selected"); return; }
+            if (!File.Exists(path.Text)) { MessageBox.Show("No file selected."); return; }
 
-            //Set up the compiler.
-            CSharpCodeProvider csc = new CSharpCodeProvider();
-            CompilerParameters parameters = new CompilerParameters(new[] { "mscorlib.dll", "System.Core.dll" }, "build.exe") { GenerateExecutable = true };
-            if (winexe.Checked) parameters.CompilerOptions = "/target:winexe";
+            SaveFileDialog SaveFileDialog = new SaveFileDialog() { Filter = "Executable files (*.exe)|*.exe" };
 
-            //Set up the code.
-            string Code = CODE;
+            if (SaveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                //Set up the compiler.
+                CSharpCodeProvider csc = new CSharpCodeProvider();
+                CompilerParameters Parameters = new CompilerParameters(new[] { "mscorlib.dll", "System.Core.dll" }, SaveFileDialog.FileName) { GenerateExecutable = true };
+                if (winexe.Checked) Parameters.CompilerOptions = "/target:winexe";
 
-            byte[] EncryptionKey = Aes.Create().Key;
-            Code = Code.Replace("___KEY___", ByteArrayToString(EncryptionKey));
+                //Set up the code.
+                string Code = CODE;
 
-            byte[] ProgramBytes = File.ReadAllBytes(path.Text);
-            byte[] EncryptedProgramBytes = new Encryption(Aes.Create(), EncryptionKey).Encrypt(ProgramBytes);
+                byte[] EncryptionKey = Aes.Create().Key;
+                Code = Code.Replace("___KEY___", ByteArrayToString(EncryptionKey));
 
-            Code = Code.Replace("___PROGRAM___", ByteArrayToString(EncryptedProgramBytes));
+                byte[] ProgramBytes = File.ReadAllBytes(path.Text);
+                byte[] EncryptedProgramBytes = new Encryption(Aes.Create(), EncryptionKey).Encrypt(ProgramBytes);
 
-            CompilerResults results = csc.CompileAssemblyFromSource(parameters, Code);
-            results.Errors.Cast<CompilerError>().ToList().ForEach(error => MessageBox.Show(error.ErrorText));
+                Code = Code.Replace("___PROGRAM___", ByteArrayToString(EncryptedProgramBytes));
+
+                CompilerResults Results = csc.CompileAssemblyFromSource(Parameters, Code);
+                Results.Errors.Cast<CompilerError>().ToList().ForEach(Error => MessageBox.Show(Error.ErrorText));
+            }
         }
 
         private string ByteArrayToString(byte[] Array)
@@ -118,8 +121,8 @@ namespace NaMeSpAcE
 
         private void search_Click(object sender, EventArgs e)
         {
-            using (OpenFileDialog openFileDialog1 = new OpenFileDialog())
-                if (openFileDialog1.ShowDialog() == DialogResult.OK) path.Text = openFileDialog1.FileName;
+            using (OpenFileDialog OpenFileDialog1 = new OpenFileDialog())
+                if (OpenFileDialog1.ShowDialog() == DialogResult.OK) path.Text = OpenFileDialog1.FileName;
         }
     }
 }

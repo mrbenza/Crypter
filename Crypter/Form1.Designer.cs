@@ -50,7 +50,7 @@
             this.build.TabIndex = 37;
             this.build.Text = "build";
             this.build.UseVisualStyleBackColor = false;
-            this.build.Click += new System.EventHandler(this.build_Click);
+            this.build.Click += new System.EventHandler(this.Build_Click);
             // 
             // label1
             // 
@@ -78,7 +78,7 @@
             this.search.Size = new System.Drawing.Size(20, 15);
             this.search.TabIndex = 35;
             this.search.UseVisualStyleBackColor = false;
-            this.search.Click += new System.EventHandler(this.search_Click);
+            this.search.Click += new System.EventHandler(this.Search_Click);
             // 
             // path
             // 

